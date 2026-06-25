@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculateur de Poutre HEA (Avec Équivalents IPE et UPN)</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f4f7f6;padding:24px;color:#1a1a1a;}
+    .container{max-width:960px;margin:0 auto;background:#fff;padding:2rem;border-radius:8px;box-shadow:0 4px 15px rgba(0,0,0,0.1);}
+    h1{font-size:22px;font-weight:700;color:#1a1a2e;border-bottom:3px solid #2ecc71;padding-bottom:10px;margin-bottom:1.25rem;}
+    h2{font-size:16px;font-weight:700;color:#1a1a2e;margin:1.25rem 0 0.75rem;padding-bottom:6px;border-bottom:2px solid #e0e0e0;}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px;}
+    .full{grid-column:1/-1;}
+    .fg{display:flex;flex-direction:column;gap:5px;}
+    label{font-size:13px;font-weight:600;color:#333;}
+    input[type=number],select{
+      padding:9px 12px;border:1px solid #ccc;border-radius:4px;font-size:15px;
+      width:100%;font-family:inherit;background:#fff;color:#1a1a1a;
+      -moz-appearance:textfield;
+    }
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+    input:focus,select:focus{outline:none;border-color:#2ecc71;box-shadow:0 0 0 3px rgba(46,204,113,0.15);}
+    .btn{width:100%;padding:14px;background:#2ecc71;color:#fff;border:none;border-radius:4px;font-size:17px;font-weight:700;cursor:pointer;margin:14px 0;letter-spacing:0.02em;}
+    .btn:hover{background:#27ae60;}
+    .results-wrap{background:#fdf6f0;border:1px solid #f0d9c8;border-radius:6px;padding:1.25rem;margin-top:0;}
+    .box-conseil{background:#e8f4fd;border:1px solid #b8d9f0;border-radius:6px;padding:1rem;margin-bottom:1rem;}
+    .profil-opt{font-size:15px;font-weight:600;color:#1a5276;margin-bottom:6px;}
+    .profil-opt span{color:#e74c3c;}
+    .italic{font-size:12px;color:#555;font-style:italic;margin-bottom:10px;}
+    .box-ipe{font-size:13px;color:#1a5276;}
+    .box-ipe strong{color:#c0392b;}
+    .analyse-title{font-size:18px;font-weight:700;color:#1a1a2e;margin:1rem 0 4px;}
+    .charge-info{font-size:13px;color:#555;margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid #e0cfc0;}
+    table{width:100%;border-collapse:collapse;margin-bottom:1rem;}
+    th{background:#2c3e50;color:#fff;padding:11px 14px;text-align:left;font-size:13px;}
+    td{padding:11px 14px;font-size:13px;border-bottom:1px solid #e8ddd5;color:#333;}
+    td:first-child{font-weight:600;}
+    .ok{color:#1e8449;font-weight:700;}
+    .nok{color:#c0392b;font-weight:700;}
+    .footer-info{font-size:13px;color:#333;line-height:1.9;}
+    .footer-info strong{font-weight:600;}
+    .footer-info .warn{color:#e67e22;}
+    .sep{border:none;border-top:1px solid #e0cfc0;margin:10px 0;}
+    .box-semelle{background:#f0fff4;border:1px solid #a9dfbf;border-radius:6px;padding:1rem;margin-top:1rem;}
+    .box-semelle h3{font-size:15px;font-weight:700;color:#1e8449;margin-bottom:10px;}
+    .semelle-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .semelle-card{background:#fff;border:1px solid #a9dfbf;border-radius:6px;padding:1rem;text-align:center;}
+    .semelle-card .side{font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;}
+    .semelle-card .dim{font-size:22px;font-weight:700;color:#1e8449;}
+    .semelle-card .dim span{font-size:13px;font-weight:400;color:#555;}
+    .semelle-card .detail{font-size:12px;color:#555;margin-top:6px;line-height:1.6;}
+    .semelle-card .warn-semelle{font-size:12px;color:#c0392b;margin-top:6px;font-weight:600;}
+
+    /* ── Splash / Modal ── */
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.62);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;}
+    .modal-box{background:#fff;border-radius:10px;padding:2rem;max-width:500px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.25);text-align:center;}
+    .modal-box .modal-icon{font-size:40px;margin-bottom:12px;}
+    .modal-box h2{font-size:17px;font-weight:700;color:#c0392b;margin-bottom:14px;line-height:1.4;}
+    .modal-box p{font-size:14px;color:#333;line-height:1.7;margin-bottom:20px;}
+    .modal-box .btn-accept{background:#2ecc71;color:#fff;border:none;border-radius:6px;padding:13px 28px;font-size:15px;font-weight:700;cursor:pointer;width:100%;}
+    .modal-box .btn-accept:hover{background:#27ae60;}
+
+    /* ── CGU Modal ── */
+    .cgu-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.62);z-index:1100;display:none;align-items:center;justify-content:center;padding:16px;}
+    .cgu-overlay.open{display:flex;}
+    .cgu-box{background:#fff;border-radius:10px;padding:2rem;max-width:680px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.25);}
+    .cgu-box h2{font-size:16px;font-weight:700;color:#1a1a2e;border-bottom:2px solid #2ecc71;padding-bottom:8px;margin-bottom:14px;}
+    .cgu-box h3{font-size:13px;font-weight:700;color:#1a5276;margin:14px 0 6px;}
+    .cgu-box p{font-size:13px;color:#333;line-height:1.75;margin-bottom:8px;}
+    .cgu-box .date-maj{font-size:11px;color:#888;margin-bottom:16px;}
+    .cgu-box .btn-close-cgu{background:#2c3e50;color:#fff;border:none;border-radius:6px;padding:10px 24px;font-size:14px;font-weight:700;cursor:pointer;margin-top:16px;width:100%;}
+    .cgu-box .btn-close-cgu:hover{background:#1a252f;}
+
+    /* ── Top bar avec menu À propos ── */
+    .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;}
+    .topbar h1{border-bottom:none;margin-bottom:0;padding-bottom:0;flex:1;}
+    .btn-about{background:none;border:1px solid #ccc;border-radius:6px;padding:7px 14px;font-size:13px;font-weight:600;color:#555;cursor:pointer;white-space:nowrap;margin-left:12px;}
+    .btn-about:hover{background:#f4f7f6;border-color:#2ecc71;color:#1a1a2e;}
+
+    /* ── Mention indicative dans les résultats ── */
+    .btn-lang{background:#1a1a2e;border:none;border-radius:6px;padding:7px 14px;font-size:13px;font-weight:700;color:#2ecc71;cursor:pointer;white-space:nowrap;margin-left:8px;letter-spacing:0.04em;}
+    .btn-lang:hover{background:#2c3e50;}
+    .sec-mode-btn{background:#eee;border:1px solid #ccc;border-radius:5px;padding:5px 12px;font-size:12px;cursor:pointer;font-weight:600;color:#444;}
+    .sec-mode-btn.active{background:#1a1a2e;color:#2ecc71;border-color:#1a1a2e;}
+    .mention-indicative{background:#fff3cd;border:1px solid #ffc107;color:#856404;border-radius:4px;font-size:11px;font-weight:600;padding:4px 10px;margin-bottom:12px;letter-spacing:0.01em;display:inline-block;}
+  </style>
+</head>
+<body>
+
+<!-- ══ SPLASH SCREEN ══ -->
+<div class="modal-overlay" id="splashModal">
+  <div class="modal-box">
+    <div class="modal-icon">⚠️</div>
+    <h2>Outil d'esquisse uniquement</h2>
+    <p>Les résultats générés par cette application sont destinés exclusivement au <strong>pré-dimensionnement en phase d'esquisse et d'étude préliminaire</strong>.<br><br>
+    <strong>Les résultats doivent être validés par un bureau d'études structure.</strong><br><br>
+    En utilisant cet outil, vous confirmez avoir pris connaissance de cet avertissement et acceptez les
+    <a href="#" onclick="openCGU(event)" style="color:#1a5276;font-weight:700;">Mentions légales et CGU</a>.</p>
+    <button class="btn-accept" onclick="closeSplash()">J'accepte et je comprends</button>
+  </div>
+</div>
+
+<!-- ══ MODAL CGU ══ -->
+<div class="cgu-overlay" id="cguModal">
+  <div class="cgu-box">
+    <h2>📋 Mentions légales — Limitation de responsabilité et usage</h2>
+    <div class="date-maj">Dernière mise à jour : Juin 2025 — Version 2</div>
+
+    <h3>1. Nature de l'outil</h3>
+    <p>L'application est un outil logiciel destiné exclusivement au <strong>pré-dimensionnement structurel en phase d'esquisse et d'étude préliminaire</strong>. Elle ne constitue en aucun cas un logiciel de calcul certifié pour l'exécution d'ouvrages.</p>
+
+    <h3>2. Absence de garantie</h3>
+    <p>L'application est fournie <em>"en l'état"</em>. L'Éditeur ne garantit pas que les résultats obtenus seront exempts d'erreurs ou parfaitement adaptés aux spécificités techniques complexes de chaque projet réel. L'utilisateur reconnaît que les calculs fournis sont des approximations basées sur les paramètres qu'il a lui-même saisis.</p>
+
+    <h3>3. Exclusion de responsabilité</h3>
+    <p>L'Éditeur décline toute responsabilité concernant les conséquences, directes ou indirectes, liées à l'utilisation, à l'interprétation ou à l'application des résultats générés par l'outil. La responsabilité de la conception structurelle, de la sécurité des ouvrages et de la conformité aux normes en vigueur demeure la responsabilité exclusive et intégrale de l'utilisateur.</p>
+
+    <h3>4. Obligation de conseil et de contrôle</h3>
+    <p>L'utilisateur, en tant que professionnel ou étudiant en génie civil, est informé qu'il est <strong>impératif de faire valider tout dimensionnement</strong> issu de cet outil par un Bureau d'Études Structure (BET) qualifié ou par une note de calcul complète réalisée avec des logiciels certifiés, conformément aux règles de l'art et aux Eurocodes en vigueur.</p>
+
+    <button class="btn-close-cgu" onclick="closeCGU()">Fermer</button>
+  </div>
+</div>
+
+<div class="container">
+  <div class="topbar">
+    <h1 id="t-h1">Calculateur de Poutre HEA (Avec Équivalents IPE et UPN)</h1>
+    <button class="btn-lang" id="btn-lang" onclick="toggleLang()">🇬🇧 EN</button>
+    <button class="btn-about" onclick="openCGU(event)">ℹ️ <span id="t-cgu">À propos / CGU</span></button>
+  </div>
+
+  <h2 id="t-geo">Géométrie & Charges</h2>
+  <div class="grid2">
+    <div class="fg"><label id="t-long">Longueur de l'ouverture (m) :</label><input type="number" id="longueur" value="4"></div>
+    <div class="fg"><label id="t-rep">Bande de reprise des charges (m) :</label><input type="number" id="reprise" value="8"></div>
+    <div class="fg"><label id="t-toit">Charge de toit (kg/m²) :</label><input type="number" id="q_toit" value="150"></div>
+    <div class="fg full">
+      <label id="t-neige">Charge de neige (kg/m²) :</label>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:4px;">
+        <button type="button" class="sec-mode-btn active" id="btn-neige-manuel" onclick="setNeigeMode('manuel')" id="t-btn-manuel">✏️ Manuel</button>
+        <button type="button" class="sec-mode-btn" id="btn-neige-auto" onclick="setNeigeMode('auto')" id="t-btn-auto">📍 Zone + Altitude</button>
+      </div>
+      <!-- Mode manuel -->
+      <div id="zone-neige-manuel">
+        <input type="number" id="q_neige" value="100" step="5" min="0">
+      </div>
+      <!-- Mode auto EC1-1-3 -->
+      <div id="zone-neige-auto" style="display:none;">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <select id="zone_neige" onchange="calcSkAuto()" style="flex:1;font-size:13px;">
+            <option value="A1">A1 — sk0=45 kg/m²</option>
+            <option value="A2">A2 — sk0=45 kg/m²</option>
+            <option value="B1" selected>B1 — sk0=55 kg/m²</option>
+            <option value="B2">B2 — sk0=55 kg/m²</option>
+            <option value="C1">C1 — sk0=65 kg/m²</option>
+            <option value="C2">C2 — sk0=65 kg/m²</option>
+            <option value="D">D — sk0=90 kg/m²</option>
+            <option value="E">E (Corse) — sk0=100 kg/m²</option>
+          </select>
+          <input type="number" id="altitude" value="200" step="50" min="0" max="3000" oninput="calcSkAuto()" style="width:90px;font-size:13px;" placeholder="Alt. (m)">
+        </div>
+        <div style="margin-top:4px;font-size:12px;color:#555;" id="sk-auto-result">sk = 55 kg/m²</div>
+        <input type="hidden" id="q_neige_auto" value="55">
+      </div>
+    </div>
+    <div class="fg"><label id="t-expl">Charge d'exploitation (kg/m²) :</label><input type="number" id="q_expl" value="150"></div>
+    <div class="fg"><label id="t-mur">Type de mur au-dessus :</label>
+      <select id="type_mur">
+        <option value="1200" id="t-m1">Parpaing creux (1200 kg/m³)</option>
+        <option value="2000" id="t-m2">Brique pleine / Pierre (2000 kg/m³)</option>
+        <option value="2500" id="t-m3">Béton banché (2500 kg/m³)</option>
+        <option value="800"  id="t-m4">Cloison placo (800 kg/m³)</option>
+        <option value="0"    id="t-m5">Aucun mur</option>
+      </select>
+    </div>
+    <div class="fg"><label id="t-hmur">Hauteur du mur (m) :</label><input type="number" id="h_mur" value="2.5"></div>
+    <div class="fg"><label id="t-epmur">Épaisseur du mur (cm) :</label><input type="number" id="ep_mur" value="20"></div>
+    <div class="fg"><label id="t-dalle">Épaisseur dalle béton éventuelle (cm) :</label><input type="number" id="ep_dalle" value="0"></div>
+    <div class="fg"><label id="t-fleche">Flèche limite admissible :</label>
+      <select id="limite_fleche">
+        <option value="300" id="t-f1">L / 300 (Plancher métallique standard)</option>
+        <option value="400" id="t-f2">L / 400 (Usage renforcé)</option>
+        <option value="500" id="t-f3">L / 500 (Plancher sensible)</option>
+      </select>
+    </div>
+    <div class="fg full"><label id="t-profil">Profilé HEA actuellement testé :</label><select id="profil_select"></select></div>
+    <div class="fg full"><label id="t-nbfers">Nombre de profilés en parallèle :</label><select id="nb_fers"><option value="1" id="t-f1fer">1 fer (simple)</option><option value="2" id="t-f2fers">2 fers en parallèle (Ix et Wel × 2)</option></select></div>
+  </div>
+
+  <h2 id="t-semelle">Semelles isolées</h2>
+  <div class="grid2">
+    <div class="fg"><label id="t-sol">Contrainte admissible du sol (bars) :</label><input type="number" id="pression_sol" value="1.5"></div>
+  </div>
+
+  <button class="btn" id="btn-calc" onclick="calculer()">Lancer le calcul &amp; Optimiser</button>
+  <div id="zone_resultat"></div>
+</div>
+
+<script>
+// ── Neige : zones EC1-1-3 Annexe Nationale France ──
+const sk0_zones = {A1:45,A2:45,B1:55,B2:55,C1:65,C2:65,D:90,E:100};
+
+function setNeigeMode(mode) {
+  document.getElementById('zone-neige-manuel').style.display = mode==='manuel' ? '' : 'none';
+  document.getElementById('zone-neige-auto').style.display   = mode==='auto'   ? '' : 'none';
+  document.getElementById('btn-neige-manuel').classList.toggle('active', mode==='manuel');
+  document.getElementById('btn-neige-auto').classList.toggle('active', mode==='auto');
+  if(mode==='auto') calcSkAuto();
+}
+
+function calcSkAuto() {
+  const zone = document.getElementById('zone_neige').value;
+  const alt  = parseFloat(document.getElementById('altitude').value)||0;
+  const sk0  = sk0_zones[zone];
+  const sk   = Math.round(sk0 * (1 + Math.pow(alt/728, 2)));
+  document.getElementById('sk-auto-result').textContent =
+    'sk = '+sk+' kg/m² — Zone '+zone+', sk0='+sk0+', alt. '+alt+'m (EC1-1-3 AN)';
+  document.getElementById('q_neige_auto').value = sk;
+}
+
+function getNeigeValue() {
+  const isAuto = document.getElementById('zone-neige-auto').style.display !== 'none';
+  if(isAuto) return parseFloat(document.getElementById('q_neige_auto').value)||0;
+  return parseFloat(document.getElementById('q_neige').value)||0;
+}
+
+const bddHEA = {
+  // p(kg/m), Ix(cm⁴), Wel(cm³), Iz(cm⁴), It(cm⁴), Wpl(cm³)
+  "HEA 100": {p:16.7,  Ix:349,    Wel:72.8,   Iz:134,    It:5.24,  Wpl:83.0,   ipe_min:"IPE 140", ipe_conf:"IPE 160"},
+  "HEA 120": {p:19.9,  Ix:606,    Wel:109.0,  Iz:231,    It:7.66,  Wpl:123.0,  ipe_min:"IPE 160", ipe_conf:"IPE 180"},
+  "HEA 140": {p:24.7,  Ix:1033,   Wel:155.4,  Iz:389,    It:12.0,  Wpl:173.0,  ipe_min:"IPE 200", ipe_conf:"IPE 220"},
+  "HEA 160": {p:30.4,  Ix:1673,   Wel:220.0,  Iz:616,    It:18.0,  Wpl:245.0,  ipe_min:"IPE 220", ipe_conf:"IPE 240"},
+  "HEA 180": {p:35.5,  Ix:2510,   Wel:293.6,  Iz:925,    It:25.0,  Wpl:324.9,  ipe_min:"IPE 240", ipe_conf:"IPE 270"},
+  "HEA 200": {p:42.3,  Ix:3692,   Wel:388.6,  Iz:1340,   It:36.0,  Wpl:429.5,  ipe_min:"IPE 270", ipe_conf:"IPE 300"},
+  "HEA 220": {p:50.5,  Ix:5410,   Wel:515.2,  Iz:1955,   It:52.0,  Wpl:568.5,  ipe_min:"IPE 300", ipe_conf:"IPE 330"},
+  "HEA 240": {p:60.3,  Ix:7763,   Wel:675.1,  Iz:2769,   It:73.0,  Wpl:744.6,  ipe_min:"IPE 330", ipe_conf:"IPE 360"},
+  "HEA 260": {p:68.2,  Ix:10450,  Wel:836.4,  Iz:3668,   It:93.0,  Wpl:920.0,  ipe_min:"IPE 360", ipe_conf:"IPE 400"},
+  "HEA 280": {p:76.4,  Ix:13670,  Wel:1010.0, Iz:4763,   It:117.0, Wpl:1112.0, ipe_min:"IPE 400", ipe_conf:"IPE 450"},
+  "HEA 300": {p:88.3,  Ix:18260,  Wel:1260.0, Iz:6310,   It:156.0, Wpl:1383.0, ipe_min:"IPE 450", ipe_conf:"IPE 500"},
+  "HEA 320": {p:97.6,  Ix:22930,  Wel:1479.0, Iz:7880,   It:177.0, Wpl:1628.0, ipe_min:"IPE 450", ipe_conf:"IPE 500"},
+  "HEA 340": {p:105.0, Ix:27690,  Wel:1678.0, Iz:9690,   It:201.0, Wpl:1850.0, ipe_min:"IPE 500", ipe_conf:"IPE 550"},
+  "HEA 360": {p:112.0, Ix:33090,  Wel:1891.0, Iz:11720,  It:226.0, Wpl:2088.0, ipe_min:"IPE 500", ipe_conf:"IPE 550"},
+  "HEA 400": {p:125.0, Ix:45070,  Wel:2311.0, Iz:15630,  It:295.0, Wpl:2562.0, ipe_min:"IPE 550", ipe_conf:"IPE 600"},
+  "HEA 450": {p:140.0, Ix:63720,  Wel:2896.0, Iz:21710,  It:394.0, Wpl:3216.0, ipe_min:"IPE 600", ipe_conf:"IPE 600"},
+  "HEA 500": {p:155.0, Ix:86970,  Wel:3550.0, Iz:28930,  It:508.0, Wpl:3949.0, ipe_min:"IPE 600", ipe_conf:"IPE 600"},
+  "HEA 550": {p:166.0, Ix:111900, Wel:4146.0, Iz:35200,  It:600.0, Wpl:4622.0, ipe_min:"IPE 600", ipe_conf:"IPE 600"},
+  "HEA 600": {p:178.0, Ix:141200, Wel:4787.0, Iz:42200,  It:701.0, Wpl:5350.0, ipe_min:"IPE 600", ipe_conf:"IPE 600"},
+  "HEA 650": {p:190.0, Ix:175200, Wel:5474.0, Iz:49560,  It:808.0, Wpl:6136.0, ipe_min:"IPE 600", ipe_conf:"IPE 600"},
+  "HEA 700": {p:204.0, Ix:215300, Wel:6241.0, Iz:58090,  It:937.0, Wpl:7032.0, ipe_min:"IPE 600", ipe_conf:"IPE 600"},
+  "HEA 800": {p:224.0, Ix:303400, Wel:7682.0, Iz:73680,  It:1140.0,Wpl:8699.0, ipe_min:"IPE 600", ipe_conf:"IPE 600"},
+  "HEA 900": {p:252.0, Ix:422100, Wel:9485.0, Iz:96240,  It:1620.0,Wpl:10810.0,ipe_min:"IPE 600", ipe_conf:"IPE 600"},
+  "HEA 1000":{p:272.0, Ix:553800, Wel:11190.0,Iz:116900, It:1890.0,Wpl:12750.0,ipe_min:"IPE 600", ipe_conf:"IPE 600"}
+};
+// ── Système de langue ──
+let currentLang = 'fr';
+const i18n = {
+  fr: {
+    h1:'Calculateur de Poutre HEA (Avec Équivalents IPE et UPN)',
+    cgu:'À propos / CGU',
+    geo:'Géométrie & Charges',
+    long:'Longueur de l\'ouverture (m) :',
+    rep:'Bande de reprise des charges (m) :',
+    toit:'Charge de toit (kg/m²) :',
+    neige:'Charge de neige (kg/m²) :',
+    expl:'Charge d\'exploitation (kg/m²) :',
+    mur:'Type de mur au-dessus :',
+    m1:'Parpaing creux (1200 kg/m³)', m2:'Brique pleine / Pierre (2000 kg/m³)',
+    m3:'Béton banché (2500 kg/m³)', m4:'Cloison placo (800 kg/m³)', m5:'Aucun mur',
+    hmur:'Hauteur du mur (m) :', epmur:'Épaisseur du mur (cm) :',
+    dalle:'Épaisseur dalle béton éventuelle (cm) :',
+    fleche:'Flèche limite admissible :',
+    f1:'L / 300 (Plancher métallique standard)', f2:'L / 400 (Usage renforcé)', f3:'L / 500 (Plancher sensible)',
+    profil:'Profilé HEA actuellement testé :',
+    semelle:'Semelles isolées', sol:'Contrainte admissible du sol (bars) :',
+    btn:'Lancer le calcul & Optimiser',
+    mention:'⚠️ Calcul indicatif — Ne pas utiliser pour l\'exécution',
+    lbl_hea:'Profilé HEA', lbl_ipe:'Profilé IPE',
+    splash_titre:'Outil d\'esquisse uniquement',
+    splash_btn:'J\'accepte et je comprends',
+    cgu_close:'Fermer',
+    lbl_upn:'Profilé UPN',
+    lbl_lightest:'Profilé le plus léger validant ELS + ELU',
+    lbl_poids:'Poids',
+    lbl_ipe_opt:'Profilé IPE optimal',
+    lbl_upn_opt:'Profilé UPN optimal',
+    analyse_prefix:'Analyse du',
+    th_crit:'Critère réglementaire', th_val:'Valeur Calculée', th_lim:'Limite Légale', th_verd:'Verdict',
+    td_fleche:'Déformation (Flèche ELS)', td_sigma:'Résistance (Contrainte ELU)',
+    ok:'CONFORME', nok:'NON CONFORME',
+    sol_min_label:'Solution minimale :', sol_ou:'ou', sol_aucun:'Aucun profilé trouvé',
+    nbfers:'Nombre de profilés en parallèle :', f1fer:'1 fer (simple)', f2fers:'2 fers en parallèle (Ix et Wel × 2)',
+  },
+  en: {
+    h1:'HEA Beam Calculator (With IPE and UPN Equivalents)',
+    cgu:'About / Terms',
+    geo:'Geometry & Loads',
+    long:'Span length (m):',
+    rep:'Load tributary width (m):',
+    toit:'Roof load (kg/m²):', neige:'Snow load (kg/m²):',
+    expl:'Live load (kg/m²):', mur:'Wall type above:',
+    m1:'Hollow block (1200 kg/m³)', m2:'Solid brick / Stone (2000 kg/m³)',
+    m3:'Cast concrete (2500 kg/m³)', m4:'Plasterboard partition (800 kg/m³)', m5:'No wall',
+    hmur:'Wall height (m):', epmur:'Wall thickness (cm):',
+    dalle:'Concrete slab thickness if any (cm):',
+    fleche:'Allowable deflection limit:',
+    f1:'L / 300 (Standard steel floor)', f2:'L / 400 (Reinforced use)', f3:'L / 500 (Sensitive floor)',
+    profil:'HEA profile currently tested:',
+    semelle:'Isolated footings', sol:'Allowable soil bearing pressure (bars):',
+    btn:'Run calculation & Optimize',
+    mention:'⚠️ Indicative calculation — Do not use for execution',
+    lbl_hea:'HEA Profile', lbl_ipe:'IPE Profile',
+    splash_titre:'Preliminary design tool only',
+    splash_btn:'I accept and understand',
+    cgu_close:'Close',
+    lbl_upn:'UPN Profile',
+    lbl_lightest:'Lightest section passing SLS + ULS',
+    lbl_poids:'Weight',
+    lbl_ipe_opt:'Optimal IPE profile',
+    lbl_upn_opt:'Optimal UPN profile',
+    analyse_prefix:'Analysis of',
+    th_crit:'Regulatory criterion', th_val:'Calculated value', th_lim:'Code limit', th_verd:'Verdict',
+    td_fleche:'Deflection (SLS)', td_sigma:'Strength (ULS stress)',
+    ok:'OK', nok:'NOT OK',
+    sol_min_label:'Minimum solution:', sol_ou:'or', sol_aucun:'No section found',
+    nbfers:'Number of parallel sections:', f1fer:'1 section (single)', f2fers:'2 sections in parallel (Ix and Wel × 2)',
+  }
+};
+
+function toggleLang() {
+  currentLang = currentLang === 'fr' ? 'en' : 'fr';
+  document.getElementById('btn-lang').textContent = currentLang === 'fr' ? '🇬🇧 EN' : '🇫🇷 FR';
+  applyLang();
+}
+
+function applyLang() {
+  const t = i18n[currentLang];
+  const ids = ['h1','cgu','geo','long','rep','toit','neige','expl','mur',
+    'm1','m2','m3','m4','m5','hmur','epmur','dalle','fleche','f1','f2','f3',
+    'profil','semelle','sol','nbfers','f1fer','f2fers'];
+  ids.forEach(id => {
+    const el = document.getElementById('t-'+id);
+    if (el) el.textContent = t[id];
+  });
+  const bc = document.getElementById('btn-calc');
+  if (bc) bc.textContent = t.btn;
+  // Splash
+  const sh2 = document.querySelector('.modal-box h2');
+  if (sh2) sh2.textContent = t.splash_titre;
+  const sb = document.querySelector('.btn-accept');
+  if (sb) sb.textContent = t.splash_btn;
+  const cc = document.querySelector('.btn-close-cgu');
+  if (cc) cc.textContent = t.cgu_close;
+  document.getElementById('zone_resultat').innerHTML = '';
+}
+
+const ordreHEA = Object.keys(bddHEA);
+
+const bddIPE = {
+  // p(kg/m), Ix(cm⁴), Wel(cm³), Iz(cm⁴), It(cm⁴), Wpl(cm³)
+  "IPE 80":  {p:6.2,   Ix:80.1,   Wel:20.0,  Iz:8.49,  It:0.724, Wpl:23.2},
+  "IPE 100": {p:8.3,   Ix:171.0,  Wel:34.2,  Iz:15.9,  It:1.20,  Wpl:39.4},
+  "IPE 120": {p:10.6,  Ix:318.0,  Wel:53.0,  Iz:27.7,  It:1.74,  Wpl:60.7},
+  "IPE 140": {p:13.2,  Ix:541.0,  Wel:77.3,  Iz:44.9,  It:2.45,  Wpl:88.3},
+  "IPE 160": {p:16.1,  Ix:869.0,  Wel:109.0, Iz:68.3,  It:3.60,  Wpl:124.0},
+  "IPE 180": {p:19.2,  Ix:1317.0, Wel:146.0, Iz:101.0, It:4.79,  Wpl:166.4},
+  "IPE 200": {p:22.9,  Ix:1943.0, Wel:194.0, Iz:142.0, It:6.98,  Wpl:221.0},
+  "IPE 220": {p:26.7,  Ix:2772.0, Wel:252.0, Iz:205.0, It:9.07,  Wpl:285.0},
+  "IPE 240": {p:31.3,  Ix:3892.0, Wel:324.0, Iz:284.0, It:12.9,  Wpl:367.0},
+  "IPE 270": {p:36.8,  Ix:5790.0, Wel:429.0, Iz:420.0, It:15.9,  Wpl:484.0},
+  "IPE 300": {p:43.1,  Ix:8356.0, Wel:557.0, Iz:604.0, It:20.1,  Wpl:628.0},
+  "IPE 330": {p:50.1,  Ix:11770.0,Wel:713.0, Iz:788.0, It:28.2,  Wpl:804.0},
+  "IPE 360": {p:58.2,  Ix:16270.0,Wel:904.0, Iz:1043.0,It:37.3,  Wpl:1019.0},
+  "IPE 400": {p:66.6,  Ix:23130.0,Wel:1156.0,Iz:1318.0,It:51.1,  Wpl:1307.0},
+  "IPE 450": {p:77.6,  Ix:33740.0,Wel:1500.0,Iz:1676.0,It:66.9,  Wpl:1702.0},
+  "IPE 500": {p:90.8,  Ix:48200.0,Wel:1928.0,Iz:2142.0,It:89.3,  Wpl:2194.0},
+  "IPE 550": {p:106.0, Ix:67120.0,Wel:2441.0,Iz:2668.0,It:123.0, Wpl:2787.0},
+  "IPE 600": {p:122.0, Ix:92080.0,Wel:3069.0,Iz:3387.0,It:165.0, Wpl:3512.0},
+};
+const ordreIPE = Object.keys(bddIPE);
+
+const bddUPN = {
+  // p(kg/m), Ix(cm⁴), Wel(cm³), Iz(cm⁴), It(cm⁴), Wpl(cm³)
+  "UPN 80":  {p:8.9,  Ix:106,    Wel:26.5,  Iz:19.4,  It:1.30,  Wpl:31.0},
+  "UPN 100": {p:10.8, Ix:206,    Wel:41.2,  Iz:29.3,  It:1.87,  Wpl:48.3},
+  "UPN 120": {p:13.7, Ix:364,    Wel:60.7,  Iz:43.2,  It:2.82,  Wpl:71.1},
+  "UPN 140": {p:16.4, Ix:605,    Wel:86.4,  Iz:62.7,  It:3.91,  Wpl:100.0},
+  "UPN 160": {p:19.2, Ix:925,    Wel:116.0, Iz:85.3,  It:5.26,  Wpl:134.0},
+  "UPN 180": {p:22.5, Ix:1350,   Wel:150.0, Iz:114.0, It:6.75,  Wpl:173.0},
+  "UPN 200": {p:25.8, Ix:1910,   Wel:191.0, Iz:148.0, It:9.12,  Wpl:220.0},
+  "UPN 220": {p:30.0, Ix:2690,   Wel:245.0, Iz:197.0, It:11.6,  Wpl:282.0},
+  "UPN 240": {p:33.9, Ix:3600,   Wel:300.0, Iz:248.0, It:14.6,  Wpl:346.0},
+  "UPN 260": {p:38.7, Ix:4820,   Wel:371.0, Iz:317.0, It:18.5,  Wpl:428.0},
+  "UPN 280": {p:42.6, Ix:6280,   Wel:448.0, Iz:399.0, It:23.1,  Wpl:516.0},
+  "UPN 300": {p:47.1, Ix:8030,   Wel:535.0, Iz:495.0, It:27.5,  Wpl:616.0},
+  "UPN 320": {p:60.7, Ix:10870,  Wel:679.0, Iz:597.0, It:45.9,  Wpl:784.0},
+  "UPN 350": {p:61.8, Ix:12840,  Wel:734.0, Iz:570.0, It:41.0,  Wpl:851.0},
+  "UPN 400": {p:73.2, Ix:20350,  Wel:1020.0,Iz:846.0, It:67.0,  Wpl:1160.0},
+};
+const ordreUPN = Object.keys(bddUPN);
+
+// ── Gestion Splash & CGU ──
+function closeSplash() {
+  document.getElementById("splashModal").style.display = "none";
+  try { localStorage.setItem("hea_cgu_accepted","1"); } catch(e){}
+}
+// Init lang
+applyLang();
+function openCGU(e) {
+  if(e) e.preventDefault();
+  document.getElementById("cguModal").classList.add("open");
+}
+function closeCGU() {
+  document.getElementById("cguModal").classList.remove("open");
+}
+// Fermer CGU en cliquant hors de la boîte
+document.getElementById("cguModal").addEventListener("click", function(e){
+  if(e.target === this) closeCGU();
+});
+// Afficher ou masquer le splash selon acceptation précédente
+(function(){
+  try { if(localStorage.getItem("hea_cgu_accepted")) { document.getElementById("splashModal").style.display="none"; } }
+  catch(e){}
+})();
+
+const sel = document.getElementById("profil_select");
+ordreHEA.forEach(n=>{const o=document.createElement("option");o.value=n;o.text=n;sel.appendChild(o);});
+sel.value="HEA 220";
+
+// ── Déversement latéral EC3 §6.3.2.2 ──
+function calcLTB(prof, L, My_Ed_kNm) {
+  const E=210000, G=81000, fy=235;
+  const L_mm = L*1000;
+  const Iz_mm4 = (prof.Iz||0)*1e4;
+  const It_mm4 = (prof.It||0)*1e4;
+  const Wpl_mm3 = (prof.Wpl||prof.Wel)*1e3;
+  if (!prof.Iz || !prof.It || Iz_mm4===0) return {ok:true,taux:0,chi_lt:1,lambda_lt:0,label:'—'};
+  const Mcr = (Math.PI/L_mm)*Math.sqrt(E*Iz_mm4*G*It_mm4);
+  const lambda_lt = Math.sqrt(Wpl_mm3*fy/Mcr);
+  const alpha_lt = 0.21;
+  const Phi_lt = 0.5*(1+alpha_lt*(lambda_lt-0.2)+lambda_lt**2);
+  const chi_lt = Math.min(1.0, 1/(Phi_lt+Math.sqrt(Math.max(0,Phi_lt**2-lambda_lt**2))));
+  const kc=0.94, f=Math.min(1-0.5*(1-kc),1.0);
+  const chi_lt_mod = Math.min(chi_lt/f,1.0);
+  const Mrd = chi_lt_mod*Wpl_mm3*fy;
+  const taux = My_Ed_kNm*1e6/Mrd*100;
+  return {taux, chi_lt:chi_lt_mod, lambda_lt, Phi_lt, Mcr_kNm:Mcr/1e6, f,
+    ok:taux<=100,
+    label: lambda_lt<=0.4 ? '✓ λ̄LT≤0.4 — pas de risque' : `λ̄LT=${lambda_lt.toFixed(2)} χLT=${chi_lt_mod.toFixed(2)}`};
+}
+
+function calcPoutre(profil, L, P_els, P_elu, limDiv) {
+  const E=210000, Ix_mm4=profil.Ix*1e4, L_mm=L*1000;
+  const fleche=(5*(P_els*1000/1000)*Math.pow(L_mm,4))/(384*E*Ix_mm4);
+  const M_ed=(P_elu*L*L)/8;
+  const sigma=((M_ed*100)/profil.Wel)*10;
+  return {fleche, fleche_lim:L_mm/limDiv, M_ed, sigma, ok_elu:sigma<=235, ok_els:fleche<=L_mm/limDiv};
+}
+
+function arrondiSemelle(val) {
+  return Math.ceil(val / 5) * 5;
+}
+
+function calculer() {
+  const L         = parseFloat(document.getElementById("longueur").value)||0;
+  const b_rep     = parseFloat(document.getElementById("reprise").value)||0;
+  const q_toit    = parseFloat(document.getElementById("q_toit").value)||0;
+  const q_neige   = getNeigeValue();
+  const q_expl    = parseFloat(document.getElementById("q_expl").value)||0;
+  const dens      = parseFloat(document.getElementById("type_mur").value)||0;
+  const h_mur     = parseFloat(document.getElementById("h_mur").value)||0;
+  const ep_mur    = parseFloat(document.getElementById("ep_mur").value)||0;
+  const ep_dalle  = parseFloat(document.getElementById("ep_dalle").value)||0;
+  const limDiv    = parseFloat(document.getElementById("limite_fleche").value);
+  const nomTest   = document.getElementById("profil_select").value;
+  const profTest  = bddHEA[nomTest];
+  const p_sol_bar = parseFloat(document.getElementById("pression_sol").value)||1.5;
+  const nbFers    = parseInt(document.getElementById("nb_fers").value)||1;
+
+  const p_mur   = dens * h_mur * (ep_mur/100);
+  const g_dalle = 2500 * (ep_dalle/100) * b_rep / 100;
+  const gk_lin  = ((q_toit+q_neige)*b_rep)/100 + p_mur/100 + g_dalle;
+  const qk_lin  = (q_expl*b_rep)/100;
+
+  // Profilé testé avec coefficient nbFers (Ix et Wel multipliés)
+  const profTestEff = {p: profTest.p*nbFers, Ix: profTest.Ix*nbFers, Wel: profTest.Wel*nbFers};
+  const P_els = gk_lin + qk_lin + profTestEff.p/100;
+  const P_elu = 1.35*(gk_lin + profTestEff.p/100) + 1.5*qk_lin;
+  const res   = calcPoutre(profTestEff, L, P_els, P_elu, limDiv);
+
+  // Helper: vérifie ELS + ELU + déversement pour un profilé effectif
+  function profilOk(prEff, prBase, pE, pS) {
+    const r = calcPoutre(prEff, L, pS, pE, limDiv);
+    if (!r.ok_elu || !r.ok_els) return false;
+    const My_Ed = pE * L * L / 8;
+    const ltb = calcLTB(prBase, L / nbFers, My_Ed); // L effective = L (déversement sur 1 fer)
+    return ltb.ok;
+  }
+
+  // Recherche HEA optimal (ELS + ELU + déversement)
+  let nomOptimal = null;
+  for (let n of ordreHEA) {
+    const pr=bddHEA[n];
+    const prEff={p:pr.p*nbFers, Ix:pr.Ix*nbFers, Wel:pr.Wel*nbFers, Wpl:pr.Wpl, Iz:pr.Iz, It:pr.It};
+    const pE=1.35*(gk_lin+prEff.p/100)+1.5*qk_lin;
+    const pS=gk_lin+qk_lin+prEff.p/100;
+    if(profilOk(prEff, pr, pE, pS)){nomOptimal=n;break;}
+  }
+
+  // Recherche IPE optimal (ELS + ELU + déversement)
+  let nomOptimalIPE = null;
+  for (let n of ordreIPE) {
+    const pr=bddIPE[n];
+    const prEff={p:pr.p*nbFers, Ix:pr.Ix*nbFers, Wel:pr.Wel*nbFers, Wpl:pr.Wpl, Iz:pr.Iz, It:pr.It};
+    const pE=1.35*(gk_lin+prEff.p/100)+1.5*qk_lin;
+    const pS=gk_lin+qk_lin+prEff.p/100;
+    if(profilOk(prEff, pr, pE, pS)){nomOptimalIPE=n; break;}
+  }
+
+  // Recherche UPN optimal (ELS + ELU + déversement)
+  let nomOptimalUPN = null;
+  for (let n of ordreUPN) {
+    const pr=bddUPN[n];
+    const prEff={p:pr.p*nbFers, Ix:pr.Ix*nbFers, Wel:pr.Wel*nbFers, Wpl:pr.Wpl, Iz:pr.Iz, It:pr.It};
+    const pE=1.35*(gk_lin+prEff.p/100)+1.5*qk_lin;
+    const pS=gk_lin+qk_lin+prEff.p/100;
+    if(profilOk(prEff, pr, pE, pS)){nomOptimalUPN=n; break;}
+  }
+
+  const fl_cm   = res.fleche/10;
+  const fl_lim_cm = res.fleche_lim/10;
+  const ratio   = Math.round(L*1000/res.fleche);
+  const R_elu   = (P_elu*L)/2;
+  const R_T     = R_elu/9.81;
+  const R_els   = (P_els*L)/2;
+  const R_els_kg= R_els*1000/9.81;
+
+  // Semelles — calcul brut sans coefficient ni profondeur
+  // 1 bar = 100 kN/m²
+  const p_sol_kNm2 = p_sol_bar * 100;
+  const R_els_kN   = R_els;
+  // Surface nécessaire = Réaction ELS / pression sol brute
+  const surf_m2    = R_els_kN / p_sol_kNm2;
+  // Côté semelle carrée, arrondi au 5 cm supérieur
+  const cote_m     = Math.sqrt(surf_m2);
+  const cote_cm    = arrondiSemelle(Math.ceil(cote_m * 100));
+  const surf_reelle= (cote_cm/100) * (cote_cm/100);
+  const p_reelle   = R_els_kN / surf_reelle;
+
+  // Épaisseur indicative par règle du débord à 45°
+  const debord     = (cote_cm - 30) / 2;
+  const ep_semelle = Math.max(arrondiSemelle(debord), 30);
+
+  const warnSol    = p_reelle > p_sol_kNm2 * 0.95;
+
+  const vf=res.ok_els?`<span class="ok">${i18n[currentLang].ok}</span>`:`<span class="nok">${i18n[currentLang].nok}</span>`;
+  const ve=res.ok_elu?`<span class="ok">${i18n[currentLang].ok}</span>`:`<span class="nok">${i18n[currentLang].nok}</span>`;
+
+  // Calcul résultats IPE optimal pour affichage
+  const profIPEopt = nomOptimalIPE ? bddIPE[nomOptimalIPE] : null;
+  const profIPEeff = profIPEopt ? {p:profIPEopt.p*nbFers, Ix:profIPEopt.Ix*nbFers, Wel:profIPEopt.Wel*nbFers} : null;
+  const P_els_IPE = profIPEeff ? gk_lin + qk_lin + profIPEeff.p/100 : 0;
+  const P_elu_IPE = profIPEeff ? 1.35*(gk_lin+profIPEeff.p/100)+1.5*qk_lin : 0;
+  const resIPE = profIPEeff ? calcPoutre(profIPEeff, L, P_els_IPE, P_elu_IPE, limDiv) : null;
+  const fl_ipe = resIPE ? (resIPE.fleche/10).toFixed(2) : '—';
+  const sig_ipe = resIPE ? (resIPE.sigma).toFixed(1) : '—';
+  const rat_ipe = resIPE ? Math.round(L*1000/resIPE.fleche) : '—';
+
+  const profUPNopt = nomOptimalUPN ? bddUPN[nomOptimalUPN] : null;
+  const profUPNeff = profUPNopt ? {p:profUPNopt.p*nbFers, Ix:profUPNopt.Ix*nbFers, Wel:profUPNopt.Wel*nbFers} : null;
+  const P_els_UPN = profUPNeff ? gk_lin + qk_lin + profUPNeff.p/100 : 0;
+  const P_elu_UPN = profUPNeff ? 1.35*(gk_lin+profUPNeff.p/100)+1.5*qk_lin : 0;
+  const resUPN = profUPNeff ? calcPoutre(profUPNeff, L, P_els_UPN, P_elu_UPN, limDiv) : null;
+  const fl_upn = resUPN ? (resUPN.fleche/10).toFixed(2) : '—';
+  const sig_upn = resUPN ? (resUPN.sigma).toFixed(1) : '—';
+  const rat_upn = resUPN ? Math.round(L*1000/resUPN.fleche) : '—';
+
+  document.getElementById("zone_resultat").innerHTML=`
+    <div class="results-wrap">
+      <div><span class="mention-indicative">⚠️ Calcul indicatif — Ne pas utiliser pour l'exécution</span></div>
+
+      <!-- LIGNE SOLUTION MINIMALE -->
+      ${(()=>{
+        const pref = nbFers>1 ? nbFers+' × ' : '';
+        const hea = nomOptimal ? pref+nomOptimal : i18n[currentLang].sol_aucun;
+        const ipe = nomOptimalIPE ? ' — '+i18n[currentLang].sol_ou+' '+pref+nomOptimalIPE : '';
+        const upn = nomOptimalUPN ? ' — '+i18n[currentLang].sol_ou+' '+pref+nomOptimalUPN : '';
+        return '<div style="background:#f0f4f8;border-left:4px solid #2ecc71;border-radius:4px;padding:10px 14px;margin-bottom:14px;font-size:14px;color:#1a1a2e;line-height:1.8;"><strong>'+i18n[currentLang].sol_min_label+'</strong> '+hea+ipe+upn+'</div>';
+      })()}
+
+      <!-- TRIPLE TABLEAU HEA / IPE / UPN -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:1rem;">
+
+        <!-- HEA -->
+        <div class="box-conseil">
+          <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;" id="lbl-hea-res">${i18n[currentLang].lbl_hea}</div>
+          <div class="profil-opt" style="font-size:18px;">${nomOptimal||'—'}${nbFers>1?' <span style="color:#e67e22;font-size:14px;">×'+nbFers+'</span>':''}</div>
+          <div class="italic">${i18n[currentLang].lbl_lightest}</div>
+          ${nomOptimal ? `
+          <div style="margin-top:8px;font-size:12px;color:#555;line-height:1.7;">
+            ${i18n[currentLang].lbl_poids} : ${bddHEA[nomOptimal].p} kg/ml<br>
+            Ix : ${bddHEA[nomOptimal].Ix} cm⁴<br>
+            Wel : ${bddHEA[nomOptimal].Wel} cm³
+          </div>` : ''}
+        </div>
+
+        <!-- IPE -->
+        <div class="box-conseil" style="background:#e8f0fd;border-color:#b0c8f0;">
+          <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">${i18n[currentLang].lbl_ipe}</div>
+          <div class="profil-opt" style="font-size:18px;color:#1a5276;">${nomOptimalIPE||'—'}${nbFers>1?' <span style="color:#e67e22;font-size:14px;">×'+nbFers+'</span>':''}</div>
+          <div class="italic">${i18n[currentLang].lbl_lightest}</div>
+          ${nomOptimalIPE ? `
+          <div style="margin-top:8px;font-size:12px;color:#555;line-height:1.7;">
+            ${i18n[currentLang].lbl_poids} : ${bddIPE[nomOptimalIPE].p} kg/ml<br>
+            Ix : ${bddIPE[nomOptimalIPE].Ix} cm⁴<br>
+            Wel : ${bddIPE[nomOptimalIPE].Wel} cm³
+          </div>` : ''}
+        </div>
+
+        <!-- UPN -->
+        <div class="box-conseil" style="background:#fef9e7;border-color:#f9e79f;">
+          <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">${i18n[currentLang].lbl_upn}</div>
+          <div class="profil-opt" style="font-size:18px;color:#7d6608;">${nomOptimalUPN||'—'}${nbFers>1?' <span style="color:#e67e22;font-size:14px;">×'+nbFers+'</span>':''}</div>
+          <div class="italic">${i18n[currentLang].lbl_lightest}</div>
+          ${nomOptimalUPN ? `
+          <div style="margin-top:8px;font-size:12px;color:#555;line-height:1.7;">
+            ${i18n[currentLang].lbl_poids} : ${bddUPN[nomOptimalUPN].p} kg/ml<br>
+            Ix : ${bddUPN[nomOptimalUPN].Ix} cm⁴<br>
+            Wel : ${bddUPN[nomOptimalUPN].Wel} cm³
+          </div>` : ''}
+        </div>
+      </div>
+
+      <div class="analyse-title">${i18n[currentLang].analyse_prefix} ${nomTest} (${currentLang==='fr'?'Portée':'Span'} ${L.toFixed(2)} m)</div>
+      <div class="charge-info">
+        ${currentLang==='fr'?'Poids mur':'Wall load'} : ${p_mur.toFixed(0)} kg/ml &nbsp;|&nbsp;
+        ${currentLang==='fr'?'Charge ELS':'SLS load'} : ${Math.round(P_els*1000)} kg/m &nbsp;|&nbsp;
+        ${currentLang==='fr'?'Charge ultime ELU':'ULS load'} : ${Math.round(P_elu*1000)} kg/m
+      </div>
+
+      <table>
+        <tr><th>${i18n[currentLang].th_crit}</th><th>${i18n[currentLang].th_val}</th><th>${i18n[currentLang].th_lim}</th><th>${i18n[currentLang].th_verd}</th></tr>
+        <tr>
+          <td>${i18n[currentLang].td_fleche}</td>
+          <td>${res.ok_els?'<span class="ok">':'<span class="nok">'} ${fl_cm.toFixed(2)} cm (L / ${ratio})</span></td>
+          <td>Max L/${limDiv} = ${fl_lim_cm.toFixed(2)} cm</td>
+          <td>${vf}</td>
+        </tr>
+        <tr>
+          <td>${i18n[currentLang].td_sigma}</td>
+          <td>${res.ok_elu?'<span class="ok">':'<span class="nok">'} ${res.sigma.toFixed(1)} MPa</span></td>
+          <td>Acier S235 = 235 MPa</td>
+          <td>${ve}</td>
+        </tr>
+        ${(()=>{
+          const ltb=calcLTB(profTest,L,P_elu*L*L/8);
+          if(ltb.lambda_lt<=0) return '';
+          const vltb=ltb.ok?'<span class="ok">'+i18n[currentLang].ok+'</span>':'<span class="nok">'+i18n[currentLang].nok+'</span>';
+          return '<tr><td>Déversement EC3 §6.3.2.2<br><small>'+ltb.label+'</small></td>'
+               + '<td>My,Ed='+(P_elu*L*L/8).toFixed(2)+' kNm / Mcr='+ltb.Mcr_kNm.toFixed(2)+' kNm</td>'
+               + '<td>χLT='+(ltb.chi_lt).toFixed(2)+' / MRd='+(ltb.chi_lt*(profTest.Wpl||profTest.Wel)*1e3*235/1e6).toFixed(1)+' kNm</td>'
+               + '<td>'+vltb+'</td></tr>';
+        })()}
+      </table>
+
+      <!-- TABLEAU IPE OPTIMAL -->
+      ${nomOptimalIPE ? `
+      <div style="margin-top:1rem;">
+        <div class="analyse-title" style="color:#1a5276;">${i18n[currentLang].analyse_prefix} ${nomOptimalIPE} (${i18n[currentLang].lbl_ipe_opt})</div>
+        <table>
+          <tr><th>${i18n[currentLang].th_crit}</th><th>${i18n[currentLang].th_val}</th><th>${i18n[currentLang].th_lim}</th><th>${i18n[currentLang].th_verd}</th></tr>
+          <tr>
+            <td>${i18n[currentLang].td_fleche}</td>
+            <td>${fl_ipe} cm (L / ${rat_ipe})</td>
+            <td>Max L/${limDiv} = ${(L*100/limDiv).toFixed(2)} cm</td>
+            <td>${resIPE.ok_els?'<span class="ok">'+i18n[currentLang].ok+'</span>':'<span class="nok">'+i18n[currentLang].nok+'</span>'}</td>
+          </tr>
+          <tr>
+            <td>${i18n[currentLang].td_sigma}</td>
+            <td>${sig_ipe} MPa</td>
+            <td>Acier S235 = 235 MPa</td>
+            <td>${resIPE.ok_elu?'<span class="ok">'+i18n[currentLang].ok+'</span>':'<span class="nok">'+i18n[currentLang].nok+'</span>'}</td>
+          </tr>
+          ${(()=>{const ltbi=calcLTB(bddIPE[nomOptimalIPE],L,P_elu_IPE*L*L/8);return ltbi.lambda_lt>0?'<tr><td>Déversement §6.3.2.2<br><small>'+ltbi.label+'</small></td><td>Mcr='+ltbi.Mcr_kNm.toFixed(1)+' kNm</td><td>χLT='+ltbi.chi_lt.toFixed(2)+'</td><td>'+(ltbi.ok?'<span class="ok">'+i18n[currentLang].ok+'</span>':'<span class="nok">'+i18n[currentLang].nok+'</span>')+'</td></tr>':'';})()}
+        </table>
+      </div>` : ''}
+
+      <!-- TABLEAU UPN OPTIMAL -->
+      ${nomOptimalUPN ? `
+      <div style="margin-top:1rem;">
+        <div class="analyse-title" style="color:#7d6608;">${i18n[currentLang].analyse_prefix} ${nomOptimalUPN} (${i18n[currentLang].lbl_upn_opt})</div>
+        <table>
+          <tr><th>${i18n[currentLang].th_crit}</th><th>${i18n[currentLang].th_val}</th><th>${i18n[currentLang].th_lim}</th><th>${i18n[currentLang].th_verd}</th></tr>
+          <tr>
+            <td>${i18n[currentLang].td_fleche}</td>
+            <td>${fl_upn} cm (L / ${rat_upn})</td>
+            <td>Max L/${limDiv} = ${(L*100/limDiv).toFixed(2)} cm</td>
+            <td>${resUPN.ok_els?'<span class="ok">'+i18n[currentLang].ok+'</span>':'<span class="nok">'+i18n[currentLang].nok+'</span>'}</td>
+          </tr>
+          <tr>
+            <td>${i18n[currentLang].td_sigma}</td>
+            <td>${sig_upn} MPa</td>
+            <td>Acier S235 = 235 MPa</td>
+            <td>${resUPN.ok_elu?'<span class="ok">'+i18n[currentLang].ok+'</span>':'<span class="nok">'+i18n[currentLang].nok+'</span>'}</td>
+          </tr>
+          ${(()=>{const ltbu=calcLTB(bddUPN[nomOptimalUPN],L,P_elu_UPN*L*L/8);return ltbu.lambda_lt>0?'<tr><td>Déversement §6.3.2.2<br><small>'+ltbu.label+'</small></td><td>Mcr='+ltbu.Mcr_kNm.toFixed(1)+' kNm</td><td>χLT='+ltbu.chi_lt.toFixed(2)+'</td><td>'+(ltbu.ok?'<span class="ok">'+i18n[currentLang].ok+'</span>':'<span class="nok">'+i18n[currentLang].nok+'</span>')+'</td></tr>':'';})()}
+        </table>
+      </div>` : ''}
+
+      <hr class="sep">
+      <div class="footer-info">
+        <strong>Moment fléchissant ultime (M_Ed) :</strong> ${res.M_ed.toFixed(1)} kNm<br>
+        <span class="warn">⚠️</span> <strong>Réaction aux appuis (par extrémité) :</strong>
+        <span class="warn">${R_T.toFixed(1)} Tonnes</span> (${R_elu.toFixed(1)} kN à l'ELU)
+      </div>
+
+      <div class="box-semelle">
+        <h3>🏗️ Semelles isolées (une par extrémité)</h3>
+        <div class="semelle-grid">
+          <div class="semelle-card">
+            <div class="side">Appui gauche</div>
+            <div class="dim">${cote_cm} × ${cote_cm} <span>cm</span></div>
+            <div class="detail">
+              Épaisseur indicative : <strong>${ep_semelle} cm</strong><br>
+              Surface réelle : ${surf_reelle.toFixed(2)} m²<br>
+              Contrainte transmise : ${p_reelle.toFixed(1)} kN/m²<br>
+              Réaction ELS : ${R_els_kg.toFixed(0)} kg (${R_els_kN.toFixed(1)} kN)
+            </div>
+            ${warnSol ? '<div class="warn-semelle">⚠️ Contrainte proche de la limite sol !</div>' : ''}
+          </div>
+          <div class="semelle-card">
+            <div class="side">Appui droit</div>
+            <div class="dim">${cote_cm} × ${cote_cm} <span>cm</span></div>
+            <div class="detail">
+              Épaisseur indicative : <strong>${ep_semelle} cm</strong><br>
+              Surface réelle : ${surf_reelle.toFixed(2)} m²<br>
+              Contrainte transmise : ${p_reelle.toFixed(1)} kN/m²<br>
+              Réaction ELS : ${R_els_kg.toFixed(0)} kg (${R_els_kN.toFixed(1)} kN)
+            </div>
+            ${warnSol ? '<div class="warn-semelle">⚠️ Contrainte proche de la limite sol !</div>' : ''}
+          </div>
+        </div>
+        <div style="font-size:11px;color:#777;margin-top:10px;line-height:1.6;">
+          Hypothèses : sol à ${p_sol_bar} bar (${p_sol_kNm2} kN/m²) — calcul brut sans coefficient.
+          Dimensions arrondies au 5 cm supérieur. Épaisseur par règle du débord à 45°.
+          <strong>Ces dimensions sont indicatives — un calcul béton armé (ferraillage) reste nécessaire.</strong>
+        </div>
+      </div>
+
+    </div>
+  `;
+}
+</script>
+</body>
+</html>
